@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersRepository } from './users.repository';
@@ -13,7 +17,7 @@ export class UsersService {
   }
 
   async createUser(createUserDto: CreateUserDto) {
-    await this.validateCreateUserDto(createUserDto)
+    await this.validateCreateUserDto(createUserDto);
     return this.usersRepository.create({
       ...createUserDto,
       password: await bcrypt.hash(createUserDto.password, 10),
