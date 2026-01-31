@@ -1,4 +1,4 @@
-.PHONY: up down log-reservations log-auth
+.PHONY: up down log-reservations log-auth log-payments
 
 up:
 	docker-compose up --build -d
@@ -11,3 +11,6 @@ log-reservations:
 
 log-auth:
 	docker-compose logs -f auth
+
+log-payments:
+	docker-compose logs -f payments
