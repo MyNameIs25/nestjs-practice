@@ -8,7 +8,11 @@ import { PaymentsCreateChargeDto } from './dto/payments-create-charge.dto';
 @Injectable()
 export class PaymentsService {
   private readonly stripe: Stripe;
-  constructor(private readonly configService: ConfigService, @Inject(NOTIFICATIONS_SERVICE) private readonly notificationsService: ClientProxy) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(NOTIFICATIONS_SERVICE)
+    private readonly notificationsService: ClientProxy,
+  ) {
     const stripeSecretKey =
       this.configService.getOrThrow<string>('STRIPE_SECRET_KEY');
 
@@ -38,7 +42,7 @@ export class PaymentsService {
       subject: 'Payment successful',
       text: `You have successfully paid $${amount} for your reservation.`,
     });
-    
+
     return paymentIntent;
   }
 }
