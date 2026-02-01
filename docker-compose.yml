@@ -13,6 +13,20 @@ services:
       - mongodb_data:/data/db
       - mongodb_configdb:/data/configdb
   
+  mysql:
+    image: mysql:9.6.0
+    container_name: mysql
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE: dev
+      MYSQL_ROOT_PASSWORD: dev
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: dev
+      TZ: Asia/Tokyo
+    volumes:
+      - mysql_data:/data/db/mysql
+  
   reservations:
     build:
       context: .
@@ -67,3 +81,4 @@ services:
 volumes:
   mongodb_data:
   mongodb_configdb:
+  mysql_data:
