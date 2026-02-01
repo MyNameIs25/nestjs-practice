@@ -9,7 +9,7 @@ import { AUTH_SERVICE } from '../constants/services';
 import { Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { UserDto } from '../dto';
+import { User } from '../models/user.entity';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()
@@ -33,12 +33,12 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const user = await firstValueFrom(
-        this.authService.send<UserDto>('authenticate', { Authentication: jwt }),
+        this.authService.send<User>('authenticate', { Authentication: jwt }),
       );
 
       if (roles) {
         for (const role of roles) {
-          if (!user?.roles?.includes(role)) {
+          if (!user?.roles?.map((role) => role.name).includes(role)) {
             this.logger.warn(`User ${user.email} does not have role ${role}`);
             throw new UnauthorizedException('User does not have required role');
           }
