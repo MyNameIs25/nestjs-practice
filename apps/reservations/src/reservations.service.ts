@@ -13,9 +13,15 @@ export class ReservationsService {
     @Inject(PAYMENTS_SERVICE) private readonly paymentsService: ClientProxy,
   ) {}
 
-  async create(createReservationDto: CreateReservationDto, {email, _id: userId}: UserDto) {
+  async create(
+    createReservationDto: CreateReservationDto,
+    { email, _id: userId }: UserDto,
+  ) {
     const response = await firstValueFrom(
-      this.paymentsService.send('create_charge', {...createReservationDto.charge, email}),
+      this.paymentsService.send('create_charge', {
+        ...createReservationDto.charge,
+        email,
+      }),
     );
     if (!response) {
       throw new Error('Failed to create charge');
