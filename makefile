@@ -14,3 +14,6 @@ log-auth:
 
 log-payments:
 	docker-compose logs -f payments
+
+log-notifications:
+	docker-compose logs -f notifications

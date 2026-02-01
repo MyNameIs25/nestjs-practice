@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
-import { CreateChargeDto } from '../../../libs/common/src/dto/create-charge.dto';
+import { NOTIFICATIONS_SERVICE } from '@app/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { PaymentsCreateChargeDto } from './dto/payments-create-charge.dto';
 
 @Injectable()
 export class PaymentsService {
   private readonly stripe: Stripe;
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly configService: ConfigService, @Inject(NOTIFICATIONS_SERVICE) private readonly notificationsService: ClientProxy) {
     const stripeSecretKey =
       this.configService.getOrThrow<string>('STRIPE_SECRET_KEY');
 
@@ -18,7 +20,8 @@ export class PaymentsService {
   async createCharge({
     token,
     amount,
-  }: CreateChargeDto): Promise<Stripe.PaymentIntent> {
+    email,
+  }: PaymentsCreateChargeDto): Promise<Stripe.PaymentIntent> {
     const paymentIntent = await this.stripe.paymentIntents.create({
       payment_method: token,
       amount: amount * 100,
@@ -30,6 +33,12 @@ export class PaymentsService {
       },
     });
 
+    this.notificationsService.emit('notify_email', {
+      email,
+      subject: 'Payment successful',
+      text: `You have successfully paid $${amount} for your reservation.`,
+    });
+    
     return paymentIntent;
   }
 }
