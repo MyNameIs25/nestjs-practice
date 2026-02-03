@@ -1,10 +1,15 @@
 import { Module } from '@nestjs/common';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
-import { LoggerModule, NOTIFICATIONS_SERVICE } from '@app/common';
+import {
+  LoggerModule,
+  NOTIFICATIONS_PACKAGE_NAME,
+  NOTIFICATIONS_SERVICE_NAME,
+} from '@app/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -12,21 +17,19 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
-        MONGODB_URI: Joi.string().required(),
-        NOTIFICATIONS_HOST: Joi.string().required(),
-        NOTIFICATIONS_PORT: Joi.number().required(),
         STRIPE_SECRET_KEY: Joi.string().required(),
-        RABBITMQ_URI: Joi.string().required(),
+        NOTIFICATIONS_GRPC_URL: Joi.string().required(),
       }),
     }),
     ClientsModule.registerAsync([
       {
-        name: NOTIFICATIONS_SERVICE,
+        name: NOTIFICATIONS_SERVICE_NAME,
         useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
+          transport: Transport.GRPC,
           options: {
-            urls: [configService.getOrThrow<string>('RABBITMQ_URI')],
-            queue: 'notifications',
+            package: NOTIFICATIONS_PACKAGE_NAME,
+            protoPath: join(__dirname, '../../../proto/notifications.proto'),
+            url: configService.getOrThrow<string>('NOTIFICATIONS_GRPC_URL'),
           },
         }),
         inject: [ConfigService],

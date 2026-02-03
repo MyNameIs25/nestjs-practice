@@ -3,22 +3,28 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
+  OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AUTH_SERVICE } from '../constants/services';
 import { Inject } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import type { ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { User } from '../models/user.entity';
 import { Reflector } from '@nestjs/core';
+import { AUTH_SERVICE_NAME, AuthServiceClient } from '../types';
 
 @Injectable()
-export class JwtAuthGuard implements CanActivate {
+export class JwtAuthGuard implements CanActivate, OnModuleInit {
   private readonly logger = new Logger(JwtAuthGuard.name);
+  private authService: AuthServiceClient;
   constructor(
-    @Inject(AUTH_SERVICE) private readonly authService: ClientProxy,
+    @Inject(AUTH_SERVICE_NAME) private readonly client: ClientGrpc,
     private readonly reflector: Reflector,
   ) {}
+
+  onModuleInit() {
+    this.authService =
+      this.client.getService<AuthServiceClient>(AUTH_SERVICE_NAME);
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const jwt =
@@ -33,7 +39,7 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const user = await firstValueFrom(
-        this.authService.send<User>('authenticate', { Authentication: jwt }),
+        this.authService.authenticate({ Authentication: jwt }),
       );
 
       if (roles) {
