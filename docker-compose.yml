@@ -25,7 +25,22 @@ services:
       MYSQL_PASSWORD: dev
       TZ: Asia/Tokyo
     volumes:
-      - mysql_data:/data/db/mysql
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pdev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    
+  rabbitmq:
+    image: rabbitmq:4.2.3
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: dev
+      RABBITMQ_DEFAULT_PASS: dev
   
   reservations:
     build:
@@ -40,6 +55,10 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+    depends_on:
+      - mongodb
+      - rabbitmq
+
   auth:
     build:
       context: .
@@ -53,7 +72,12 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-  
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+
   payments:
     build:
       context: .
@@ -65,7 +89,10 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-  
+    depends_on:
+      - mongodb
+      - rabbitmq
+
   notifications:
     build:
       context: .
@@ -77,6 +104,8 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+    depends_on:
+      - rabbitmq
 
 volumes:
   mongodb_data:
