@@ -35,5 +35,6 @@ RUN npm install -g pnpm
 RUN pnpm install --prod
 
 COPY --from=development /usr/src/app/dist/apps/notifications ./dist/apps/notifications
+COPY proto proto
 
 CMD ["node", "dist/apps/notifications/main"]

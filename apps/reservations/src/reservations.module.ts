@@ -4,14 +4,17 @@ import { ReservationsController } from './reservations.controller';
 import {
   DatabaseModule,
   LoggerModule,
-  AUTH_SERVICE,
-  PAYMENTS_SERVICE,
+  AUTH_PACKAGE_NAME,
+  PAYMENTS_PACKAGE_NAME,
+  AUTH_SERVICE_NAME,
+  PAYMENTS_SERVICE_NAME,
 } from '@app/common';
 import { ReservationsRepository } from './reservations.repository';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { Reservation } from './models/reservation.entity';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -22,32 +25,34 @@ import { Reservation } from './models/reservation.entity';
       isGlobal: true,
       validationSchema: Joi.object({
         HTTP_PORT: Joi.number().required(),
-        RABBITMQ_URI: Joi.string().required(),
+        AUTH_GRPC_URL: Joi.string().required(),
+        PAYMENTS_GRPC_URL: Joi.string().required(),
       }),
     }),
     ClientsModule.registerAsync([
       {
-        name: AUTH_SERVICE,
+        name: AUTH_SERVICE_NAME,
         useFactory: (configService: ConfigService) => {
           return {
-            transport: Transport.RMQ,
+            transport: Transport.GRPC,
             options: {
-              urls: [configService.getOrThrow<string>('RABBITMQ_URI')],
-              queue: 'auth',
+              package: AUTH_PACKAGE_NAME,
+              protoPath: join(__dirname, '../../../proto/auth.proto'),
+              url: configService.getOrThrow<string>('AUTH_GRPC_URL'),
             },
           };
         },
         inject: [ConfigService],
       },
       {
-        name: PAYMENTS_SERVICE,
+        name: PAYMENTS_SERVICE_NAME,
         useFactory: (configService: ConfigService) => {
           return {
-            transport: Transport.RMQ,
+            transport: Transport.GRPC,
             options: {
-              urls: [configService.getOrThrow<string>('RABBITMQ_URI')],
-              queue: 'payments',
-              noAck: false,
+              package: PAYMENTS_PACKAGE_NAME,
+              protoPath: join(__dirname, '../../../proto/payments.proto'),
+              url: configService.getOrThrow<string>('PAYMENTS_GRPC_URL'),
             },
           };
         },
