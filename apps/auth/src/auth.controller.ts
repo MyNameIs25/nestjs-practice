@@ -1,28 +1,38 @@
 import { Controller, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { UserDocument } from '@app/common';
+import {
+  AuthServiceController,
+  AuthServiceControllerMethods,
+  User,
+  UserMessage,
+} from '@app/common';
+import type { Authentication } from '@app/common';
 import { CurrentUser } from '@app/common';
 import type { Response } from 'express';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Payload } from '@nestjs/microservices';
 
+@AuthServiceControllerMethods()
 @Controller('auth')
-export class AuthController {
+export class AuthController implements AuthServiceController {
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(
-    @CurrentUser() user: UserDocument,
+    @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
     return this.authService.login(user, response);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @MessagePattern('authenticate')
-  async authenticate(@Payload() data: any) {
-    return data.user;
+  async authenticate(@Payload() data: Authentication): Promise<UserMessage> {
+    const user = await this.authService.verifyToken(data.Authentication);
+    return {
+      id: user.id,
+      email: user.email,
+      password: user.password,
+      roles: user.roles?.map((role) => ({ id: role.id, name: role.name })) ?? [],
+    };
   }
 }

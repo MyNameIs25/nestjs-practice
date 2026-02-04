@@ -1,15 +1,15 @@
-import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class NotifyEmailDto {
-    @IsEmail()
-    @IsNotEmpty()
-    email: string;
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
-    @IsString()
-    @IsNotEmpty()
-    subject: string;
+  @IsString()
+  @IsNotEmpty()
+  subject: string;
 
-    @IsString()
-    @IsNotEmpty()
-    text: string;
+  @IsString()
+  @IsNotEmpty()
+  text: string;
 }
