@@ -1,11 +1,34 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { User } from '../models/user.entity';
+import { UserMessage } from '../types/auth';
 
-function getCurrentUserByContext(context: ExecutionContext): User {
-  if (context.getType() === 'rpc') {
+function getCurrentUserByContext(
+  context: ExecutionContext,
+): UserMessage | undefined {
+  const requestType = context.getType();
+
+  if (requestType === 'rpc') {
     return context.switchToRpc().getData().user;
   }
-  return context.switchToHttp().getRequest().user;
+
+  if (requestType === 'http') {
+    return context.switchToHttp().getRequest().user;
+  }
+
+  // GraphQL context
+  const gqlContext = context.getArgs()[2];
+
+  // Gateway: user is set directly by authContext
+  if (gqlContext?.user) {
+    return gqlContext.user;
+  }
+
+  // Subgraph: user is forwarded via headers from gateway
+  const userHeader = gqlContext?.req?.headers?.user;
+  if (userHeader && userHeader !== 'null') {
+    return JSON.parse(userHeader);
+  }
+
+  return undefined;
 }
 
 export const CurrentUser = createParamDecorator(

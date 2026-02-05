@@ -32,7 +32,8 @@ export class AuthController implements AuthServiceController {
       id: user.id,
       email: user.email,
       password: user.password,
-      roles: user.roles?.map((role) => ({ id: role.id, name: role.name })) ?? [],
+      roles:
+        user.roles?.map((role) => ({ id: role.id, name: role.name })) ?? [],
     };
   }
 }
