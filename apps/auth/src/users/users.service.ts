@@ -14,7 +14,7 @@ export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
   async findUserById(userId: number) {
-    return this.usersRepository.findOne({ id: userId });
+    return this.usersRepository.findOne({ id: userId }, { roles: true });
   }
 
   async create(createUserDto: CreateUserDto) {
@@ -37,7 +37,7 @@ export class UsersService {
   }
 
   async verifyUser(email: string, password: string) {
-    const user = await this.usersRepository.findOne({ email });
+    const user = await this.usersRepository.findOne({ email }, { roles: true });
     const passwordIsValid = await bcrypt.compare(password, user.password);
     if (!passwordIsValid) {
       throw new UnauthorizedException('Credentials are not valid.');
@@ -47,5 +47,9 @@ export class UsersService {
 
   async getUser(getUserDto: GetUserDto) {
     return this.usersRepository.findOne(getUserDto, { roles: true });
+  }
+
+  async findAll() {
+    return this.usersRepository.find({}, { roles: true });
   }
 }

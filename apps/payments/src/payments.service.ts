@@ -26,12 +26,10 @@ export class PaymentsService implements OnModuleInit {
   }
 
   onModuleInit() {
-    console.log('PaymentsService onModuleInit called');
     this.notificationsService =
       this.client.getService<NotificationsServiceClient>(
         NOTIFICATIONS_SERVICE_NAME,
       );
-    console.log('notificationsService initialized:', !!this.notificationsService);
   }
 
   async createCharge({
@@ -61,5 +59,10 @@ export class PaymentsService implements OnModuleInit {
     }
 
     return paymentIntent;
+  }
+
+  async getPayments() {
+    const paymentIntents = await this.stripe.paymentIntents.list();
+    return paymentIntents.data;
   }
 }
