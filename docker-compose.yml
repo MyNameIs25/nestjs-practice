@@ -26,12 +26,6 @@ services:
       TZ: Asia/Tokyo
     volumes:
       - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pdev"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     
   rabbitmq:
     image: rabbitmq:4.2.3
@@ -50,15 +44,13 @@ services:
     command: pnpm run start:dev reservations
     env_file:
       - ./apps/reservations/.env
+    environment:
+      - WATCHPACK_POLLING=true
     ports:
       - '3000:3000'
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      - mongodb
-      - rabbitmq
-
   auth:
     build:
       context: .
@@ -67,16 +59,13 @@ services:
     command: pnpm run start:dev auth
     env_file:
       - ./apps/auth/.env
+    environment:
+      - WATCHPACK_POLLING=true
     ports:
       - '3001:3001'
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      mysql:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_started
 
   payments:
     build:
@@ -86,12 +75,11 @@ services:
     command: pnpm run start:dev payments
     env_file:
       - ./apps/payments/.env
+    environment:
+      - WATCHPACK_POLLING=true
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      - mongodb
-      - rabbitmq
 
   notifications:
     build:
@@ -101,11 +89,27 @@ services:
     command: pnpm run start:dev notifications
     env_file:
       - ./apps/notifications/.env
+    environment:
+      - WATCHPACK_POLLING=true
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      - rabbitmq
+
+  gateway:
+    build:
+      context: .
+      dockerfile: ./apps/gateway/Dockerfile
+      target: development
+    command: pnpm run start:dev gateway
+    env_file:
+      - ./apps/gateway/.env
+    environment:
+      - WATCHPACK_POLLING=true
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - '3002:3002'
 
 volumes:
   mongodb_data:
